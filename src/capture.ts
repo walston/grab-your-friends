@@ -5,7 +5,6 @@ const users = new Map<string, User>();
 const observer = new MutationObserver(
   debounce(() => {
     const list = document.querySelector('[aria-label="Timeline: Following"]');
-    console.log(list);
     const user_cells = Array.from(
       list.querySelectorAll('[data-testid="UserCell"]')
     ).filter((node: HTMLDivElement) => {
@@ -51,7 +50,7 @@ async function captureUser(node: HTMLDivElement) {
   const links = node.querySelectorAll("a");
   const user_image = links.item(0).querySelector("img");
   user.image = user_image.getAttribute("src");
-  const display_name = links.item(1).textContent; // this can be improved if we can translate image urls to unicode code points
+  const display_name = crawlDisplayName(links.item(1));
   user.displayName = display_name;
   const bio = node.childNodes
     .item(0)
@@ -60,8 +59,28 @@ async function captureUser(node: HTMLDivElement) {
   user.bio = bio;
 
   const filename = `${username.slice(1)}.png`;
+}
 
-  console.log(filename, user);
+function crawlDisplayName(el: HTMLElement) {
+  let name = "";
+  const nodes = [el] as Node[];
+  while (nodes.length > 0) {
+    const node = nodes.shift();
+    if (node.nodeType === Node.TEXT_NODE) {
+      name = node.textContent + name;
+    } else if (
+      node.nodeType === Node.ELEMENT_NODE &&
+      (node as Element).tagName.toLowerCase() === "img"
+    ) {
+      const emoji = (node as HTMLImageElement).getAttribute("alt");
+      name = emoji + name;
+    } else if (node.childNodes.length > 0) {
+      node.childNodes.forEach((node) => nodes.unshift(node));
+    }
+  }
+
+  console.log(el, name);
+  return name;
 }
 
 function debounce(func, timeout = 300) {
