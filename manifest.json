@@ -2,13 +2,19 @@
   "manifest_version": 3,
   "name": "Grab Your Friends",
   "description": "Base Level Extension",
-  "version": "1.0",
+  "version": "1.1",
+  "permissions": ["activeTab"],
+  "cross_origin_embedder_policy": { "value": "unsafe-none" },
+  "cross_origin_opener_policy": { "value": "unsafe-none" },
+  "background": { "service_worker": "scripts/background.js" },
   "content_scripts": [
     {
       "js": ["scripts/capture.js"],
       "run_at": "document_end",
       "matches": [
+        "https://*.twitter.com/*/following",
         "https://twitter.com/*/following",
+        "https://*.x.com/*/following",
         "https://x.com/*/following"
       ]
     }

@@ -7,11 +7,13 @@ const observer = new MutationObserver(
     const list = document.querySelector('[aria-label="Timeline: Following"]');
     const user_cells = Array.from(
       list.querySelectorAll('[data-testid="UserCell"]')
-    ).filter((node: HTMLDivElement) => {
-      const username = getUserName(node);
-      if (username === undefined) return true;
-      return !users.has(username);
-    });
+    )
+      .filter((node: HTMLDivElement) => {
+        const username = getUserName(node);
+        if (username === undefined) return true;
+        return !users.has(username);
+      })
+      .slice(0, 1);
 
     user_cells.forEach(async (element: HTMLDivElement) => {
       try {
@@ -19,6 +21,7 @@ const observer = new MutationObserver(
         await captureUser(element);
         highlighter(element, "green");
       } catch (error) {
+        console.log(error);
         users.delete(getUserName(element));
         highlighter(element, "red");
       }
@@ -49,16 +52,20 @@ async function captureUser(node: HTMLDivElement) {
 
   const links = node.querySelectorAll("a");
   const user_image = links.item(0).querySelector("img");
-  user.image = user_image.getAttribute("src");
+  user.imageSource = user_image.getAttribute("src");
   const display_name = crawlDisplayName(links.item(1));
   user.displayName = display_name;
-  const bio = node.childNodes
-    .item(0)
-    .childNodes.item(1)
-    .childNodes.item(1).textContent;
+  const bio =
+    node.childNodes?.item(0)?.childNodes.item(1)?.childNodes.item(1)
+      ?.textContent ?? "<Unable to grab bio>";
   user.bio = bio;
 
   const filename = `${username.slice(1)}.png`;
+  await chrome.runtime.sendMessage({
+    type: "user_object",
+    filename,
+    user,
+  });
 }
 
 function crawlDisplayName(el: HTMLElement) {
@@ -79,7 +86,6 @@ function crawlDisplayName(el: HTMLElement) {
     }
   }
 
-  console.log(el, name);
   return name;
 }
 
@@ -97,5 +103,5 @@ type User = {
   username?: string;
   displayName?: string;
   bio?: string;
-  image?: string;
+  imageSource?: string;
 };

@@ -2,6 +2,7 @@
   "buildOptions": {},
   "include": ["src/**/*.ts"],
   "compilerOptions": {
+    "sourceMap": true,
     "lib": ["ES2022", "DOM"],
     "outDir": "scripts",
     "types": ["chrome-types"]
