@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "Grab Your Friends",
+  "description": "Base Level Extension",
+  "version": "1.0",
+  "content_scripts": [
+    {
+      "js": ["scripts/capture.js"],
+      "run_at": "document_end",
+      "matches": [
+        "https://twitter.com/*/following",
+        "https://x.com/*/following"
+      ]
+    }
+  ]
+}

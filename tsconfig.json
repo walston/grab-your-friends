@@ -1,0 +1,9 @@
+{
+  "buildOptions": {},
+  "include": ["src/**/*.ts"],
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM"],
+    "outDir": "scripts",
+    "types": ["chrome-types"]
+  }
+}
