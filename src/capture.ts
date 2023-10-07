@@ -7,17 +7,15 @@ const observer = new MutationObserver(
     const list = document.querySelector('[aria-label="Timeline: Following"]');
     const user_cells = Array.from(
       list.querySelectorAll('[data-testid="UserCell"]')
-    )
-      .filter((node: HTMLDivElement) => {
-        const username = getUserName(node);
-        if (username === undefined) return true;
-        return !users.has(username);
-      })
-      .slice(0, 1);
+    ).filter((node: HTMLDivElement) => {
+      const username = getUserName(node);
+      if (username === undefined) return true;
+      return !users.has(username);
+    });
 
     user_cells.forEach(async (element: HTMLDivElement) => {
       try {
-        highlighter(element, "yellow");
+        highlighter(element, "gold");
         await captureUser(element);
         highlighter(element, "green");
       } catch (error) {
@@ -46,34 +44,32 @@ function getUserName(node: HTMLDivElement) {
 
 async function captureUser(node: HTMLDivElement) {
   const username = getUserName(node);
-  const user: User = {};
-  users.set(username, user);
-  user.username = username;
 
   const links = node.querySelectorAll("a");
-  const user_image = links.item(0).querySelector("img");
-  user.imageSource = user_image.getAttribute("src");
-  const display_name = crawlDisplayName(links.item(1));
-  user.displayName = display_name;
+  const displayName = crawlTextWithEmoji(links.item(1));
   const bio =
-    node.childNodes?.item(0)?.childNodes.item(1)?.childNodes.item(1)
-      ?.textContent ?? "<Unable to grab bio>";
-  user.bio = bio;
+    crawlTextWithEmoji(
+      node.childNodes
+        .item(0)
+        .childNodes.item(1)
+        .childNodes.item(1) as HTMLElement
+    ) || "<Unable to grab bio>";
 
-  const filename = `${username.slice(1)}.png`;
-  await chrome.runtime.sendMessage({
-    type: "user_object",
-    filename,
-    user,
-  });
+  const user = { username, displayName, bio };
+  users.set(username, user);
+
+  console.log(user);
+
+  chrome.runtime.sendMessage({ ...user, type: "user" });
 }
 
-function crawlDisplayName(el: HTMLElement) {
+function crawlTextWithEmoji(el: HTMLElement) {
   let name = "";
   const nodes = [el] as Node[];
   while (nodes.length > 0) {
     const node = nodes.shift();
-    if (node.nodeType === Node.TEXT_NODE) {
+    if (node === null) {
+    } else if (node.nodeType === Node.TEXT_NODE) {
       name = node.textContent + name;
     } else if (
       node.nodeType === Node.ELEMENT_NODE &&
@@ -100,8 +96,7 @@ function debounce(func, timeout = 300) {
 }
 
 type User = {
-  username?: string;
-  displayName?: string;
-  bio?: string;
-  imageSource?: string;
+  username: string;
+  displayName: string;
+  bio: string;
 };
