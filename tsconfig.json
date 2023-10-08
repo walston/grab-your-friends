@@ -4,6 +4,7 @@
   "compilerOptions": {
     "sourceMap": true,
     "lib": ["ES2022", "DOM"],
+    "target": "ES2022",
     "outDir": "scripts",
     "types": ["chrome-types"]
   }

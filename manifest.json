@@ -10,9 +10,6 @@
   "content_security_policy": {
     "content_scripts": "img-src '*'"
   },
-  "action": {
-    "default_popup": "popup.html"
-  },
   "content_scripts": [
     {
       "js": ["scripts/capture.js"],
