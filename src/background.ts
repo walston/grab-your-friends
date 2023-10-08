@@ -4,10 +4,13 @@ type SaveMessage = { type: "save" };
 
 chrome.runtime.onMessage.addListener(
   (message: UserMessage, sender, respond) => {
-    if (message.type !== "user") return false;
     const { type, ...user } = message;
-    const { username } = user;
-    savableUsers.set(username, user);
+    if (type !== "user") return false;
+
+    chrome.downloads.download({
+      filename: `${user.username.slice(1)}.json`,
+      url: `data:application/json,${encodeURIComponent(JSON.stringify(user))}`,
+    });
     respond();
     return true;
   }

@@ -7,16 +7,19 @@ const observer = new MutationObserver(
     const list = document.querySelector('[aria-label="Timeline: Following"]');
     const user_cells = Array.from(
       list.querySelectorAll('[data-testid="UserCell"]')
-    ).filter((node: HTMLDivElement) => {
-      const username = getUserName(node);
-      if (username === undefined) return true;
-      return !users.has(username);
-    });
-
+    )
+      .filter((node: HTMLDivElement) => {
+        const username = getUserName(node);
+        return !users.has(username);
+      })
+      /** temp fix for debugging */
+      .slice(0, 1);
     user_cells.forEach(async (element: HTMLDivElement) => {
       try {
         highlighter(element, "gold");
-        await captureUser(element);
+        const user = await captureUser(element);
+        await chrome.runtime.sendMessage({ type: "user", ...user });
+
         highlighter(element, "green");
       } catch (error) {
         console.log(error);
@@ -42,6 +45,7 @@ function getUserName(node: HTMLDivElement) {
   return links.item(2)?.textContent;
 }
 
+// the permissions are set to avoid SecurityError now, but `chrome.downloads` is `undefined`
 async function captureUser(node: HTMLDivElement) {
   const username = getUserName(node);
 
@@ -58,31 +62,30 @@ async function captureUser(node: HTMLDivElement) {
   const user = { username, displayName, bio };
   users.set(username, user);
 
-  console.log(user);
-
-  chrome.runtime.sendMessage({ ...user, type: "user" });
+  return user;
 }
 
 function crawlTextWithEmoji(el: HTMLElement) {
-  let name = "";
+  let text = "";
   const nodes = [el] as Node[];
   while (nodes.length > 0) {
     const node = nodes.shift();
     if (node === null) {
+      continue;
     } else if (node.nodeType === Node.TEXT_NODE) {
-      name = node.textContent + name;
+      text = node.textContent + text;
     } else if (
       node.nodeType === Node.ELEMENT_NODE &&
       (node as Element).tagName.toLowerCase() === "img"
     ) {
       const emoji = (node as HTMLImageElement).getAttribute("alt");
-      name = emoji + name;
+      text = emoji + text;
     } else if (node.childNodes.length > 0) {
-      node.childNodes.forEach((node) => nodes.unshift(node));
+      node.childNodes.forEach((child) => nodes.unshift(child));
     }
   }
 
-  return name;
+  return text;
 }
 
 function debounce(func, timeout = 300) {

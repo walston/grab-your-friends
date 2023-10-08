@@ -3,10 +3,16 @@
   "name": "Grab Your Friends",
   "description": "Base Level Extension",
   "version": "1.1",
-  "permissions": ["activeTab"],
+  "permissions": ["downloads"],
   "cross_origin_embedder_policy": { "value": "unsafe-none" },
   "cross_origin_opener_policy": { "value": "unsafe-none" },
   "background": { "service_worker": "scripts/background.js" },
+  "content_security_policy": {
+    "content_scripts": "img-src '*'"
+  },
+  "action": {
+    "default_popup": "popup.html"
+  },
   "content_scripts": [
     {
       "js": ["scripts/capture.js"],
