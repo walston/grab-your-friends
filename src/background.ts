@@ -29,11 +29,10 @@ chrome.runtime.onMessage.addListener(
       y += 20;
     }
 
-    console.log(user.image);
     fetch(user.image)
-      .then((response) => response.blob())
-      .then((blob) => createImageBitmap(blob))
-      .then((image) => {
+      .then(async (response) => {
+        const blob = await response.blob();
+        const image = await createImageBitmap(blob);
         context.drawImage(image, 12, 8, 40, 40);
       })
       .then(() => canvas.convertToBlob({ type: "image/png" }))

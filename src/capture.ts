@@ -1,30 +1,42 @@
 const reactRoot = document.getElementById("react-root");
 
-const users = new Map<string, User>();
+type CapturedUser = User & { status: "done" };
+type ErrordCapture = { status: "failed" };
+type CaptureStatus = CapturedUser | ErrordCapture;
+const users = new Map<string, CaptureStatus>();
 
 const observer = new MutationObserver(
-  debounce(() => {
+  debounce(async () => {
     const list = document.querySelector('[aria-label="Timeline: Following"]');
-    const user_cells = Array.from(
+    const user_cells: HTMLDivElement[] = Array.from(
       list.querySelectorAll('[data-testid="UserCell"]')
-    ).filter((node: HTMLDivElement) => {
-      const username = getUserName(node);
-      return !users.has(username);
-    });
+    );
 
-    user_cells.forEach(async (element: HTMLDivElement) => {
+    for (const element of user_cells) {
+      const username = getUserName(element);
+      const prior = users.get(username);
+
+      if (prior && prior.status === "done") {
+        highlighter(element, "green");
+        continue;
+      }
+
+      if (!prior || prior.status === "failed") {
+        highlighter(element, "orange");
+      }
+
       try {
-        highlighter(element, "gold");
         const user = await captureUser(element);
         await chrome.runtime.sendMessage({ type: "user", ...user });
-
+        users.set(username, { status: "done", ...user });
         highlighter(element, "green");
       } catch (error) {
         console.log(error);
-        users.delete(getUserName(element));
+        const username = getUserName(element);
+        users.set(username, { status: "failed" });
         highlighter(element, "red");
       }
-    });
+    }
   }, 500)
 );
 
@@ -61,7 +73,6 @@ async function captureUser(node: HTMLDivElement) {
     ?.getAttribute("src");
 
   const user: User = { username, displayName, bio, image };
-  users.set(username, user);
 
   return user;
 }
