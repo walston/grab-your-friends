@@ -7,13 +7,11 @@ const observer = new MutationObserver(
     const list = document.querySelector('[aria-label="Timeline: Following"]');
     const user_cells = Array.from(
       list.querySelectorAll('[data-testid="UserCell"]')
-    )
-      .filter((node: HTMLDivElement) => {
-        const username = getUserName(node);
-        return !users.has(username);
-      })
-      /** temp fix for debugging */
-      .slice(0, 1);
+    ).filter((node: HTMLDivElement) => {
+      const username = getUserName(node);
+      return !users.has(username);
+    });
+
     user_cells.forEach(async (element: HTMLDivElement) => {
       try {
         highlighter(element, "gold");
