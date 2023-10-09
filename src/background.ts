@@ -16,8 +16,6 @@ chrome.runtime.onMessage.addListener(
     context.fillStyle = "black";
     context.fillRect(-5, -5, canvas.width + 10, canvas.height + 10);
 
-    // context.drawImage() // still need to grab the picture
-
     context.font = "15px PT Sans";
     context.fillStyle = "white";
     context.fillText(user.displayName, 64, 20);
@@ -31,8 +29,14 @@ chrome.runtime.onMessage.addListener(
       y += 20;
     }
 
-    canvas
-      .convertToBlob({ type: "image/png" })
+    console.log(user.image);
+    fetch(user.image)
+      .then((response) => response.blob())
+      .then((blob) => createImageBitmap(blob))
+      .then((image) => {
+        context.drawImage(image, 12, 8, 40, 40);
+      })
+      .then(() => canvas.convertToBlob({ type: "image/png" }))
       .then(blobToDataUrl)
       .then((url) => {
         chrome.downloads.download({
@@ -40,7 +44,8 @@ chrome.runtime.onMessage.addListener(
           url,
         });
         respond();
-      });
+      })
+      .catch((err) => console.error(err));
 
     return true;
   }

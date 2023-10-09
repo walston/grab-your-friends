@@ -58,8 +58,11 @@ async function captureUser(node: HTMLDivElement) {
         .childNodes.item(1)
         .childNodes.item(1) as HTMLElement
     ) || "<Unable to grab bio>";
+  const image = node
+    .querySelector('[data-testid^="UserAvatar-Container"] img')
+    ?.getAttribute("src");
 
-  const user = { username, displayName, bio };
+  const user: User = { username, displayName, bio, image };
   users.set(username, user);
 
   return user;
@@ -102,4 +105,5 @@ type User = {
   username: string;
   displayName: string;
   bio: string;
+  image: string;
 };
