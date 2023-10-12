@@ -3,7 +3,7 @@ type UserMessage = User & { type: "user" };
 type SaveMessage = { type: "save" };
 
 chrome.runtime.onMessage.addListener(
-  (message: UserMessage, sender, respond) => {
+  (message: UserMessage, sender, respond: (error?: Error) => void) => {
     const { type, ...user } = message;
     if (type !== "user") return false;
 
@@ -29,6 +29,10 @@ chrome.runtime.onMessage.addListener(
       y += 20;
     }
 
+    /**
+     * @NOTE the remaining ~30 profiles profile-pics hang forever as server requests...
+     * I have no idea how to force them to load, or any idea how I can pass an image from the FE to here
+     * */
     fetch(user.image)
       .then(async (response) => {
         const blob = await response.blob();
@@ -36,27 +40,32 @@ chrome.runtime.onMessage.addListener(
         context.drawImage(image, 12, 8, 40, 40);
       })
       .then(() => canvas.convertToBlob({ type: "image/png" }))
-      .then(blobToDataUrl)
+      .then((blob) => blobToDataUrl(blob, user.username))
       .then((url) => {
         chrome.downloads.download({
           filename: `${user.username.slice(1)}.png`,
           url,
         });
-        respond();
       })
-      .catch((err) => console.error(err));
+      .then(() => respond())
+      .catch((err) => {
+        respond(err);
+      });
 
     return true;
   }
 );
 
-function blobToDataUrl(blob: Blob): Promise<string> {
+function blobToDataUrl(blob: Blob, username: string): Promise<string> {
+  console.log("blobToDataUrl", username);
   return new Promise((resolve, reject) => {
     const file = new FileReader();
 
-    file.addEventListener("load", (reader) =>
-      resolve(reader.target.result as string)
-    );
+    file.addEventListener("load", (reader) => {
+      const result = reader.target.result as string;
+      console.log(username, result);
+      resolve(result);
+    });
     file.addEventListener("error", reject);
     file.readAsDataURL(blob);
   });
